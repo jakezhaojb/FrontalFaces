@@ -19,6 +19,7 @@
 #include <dirent.h>
 
 #include "flandmark_detector.h"
+#include "cpdb_compute.h"
 
 // global variable
 int front_face_num = 1;
@@ -107,6 +108,8 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
     int nFaces;
     char front_img_file_name[32];
     IplImage* regular_face = cvCreateImage(cvSize(50, 50), 8, 3);
+    IplImage* cpdb_sharpness;
+    double cpdb_value;
 
     storage = cvCreateMemStorage(0);
     cvClearMemStorage(storage);
@@ -141,7 +144,14 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
 
         }
         if( judgeFrontFace(landmarks)){
-          sprintf(front_img_file_name, "FrontFace//%d_%d_%d.jpg", frame_num, iface + 1, front_face_num);
+          cvSetImageROI(orig, *r); // cvRect(r->x-5, r->y-60, r->width+20, r->height+85));
+          cvResize(orig, regular_face);
+          // Sharpness judgement
+          cpdb_sharpness = cvCreateImage(cvGetSize(orig), orig->depth, 1);
+          cvCvtColor(orig, cpdb_sharpness, CV_BGR2GRAY);
+          cpdb_value = cpdbm(cpdb_sharpness);
+
+          sprintf(front_img_file_name, "FrontFace//%d_%d_%d_%f.jpg", frame_num, iface + 1, front_face_num, cpdb_value);
           // DEBUG!
           fp = fopen("FrontFace//records.txt", "at");
           fprintf(fp, "FrontFace//%d_%d_%d.jpg is captured, and the following is the points:\n", frame_num, iface + 1, front_face_num);
@@ -160,11 +170,10 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
           fclose(fp);
           // DEBUG ends.
           //front_img_file_name = "FrontFace//" + ::itoa(front_face_num) + ".jpg" ;
-          cvSetImageROI(orig, *r); // cvRect(r->x-5, r->y-60, r->width+20, r->height+85));
-          cvResize(orig, regular_face);
           cvSaveImage(front_img_file_name, orig);
           cvResetImageROI(orig);
           front_face_num++;
+          cvReleaseImage(&cpdb_sharpness);
         }
     }
 
