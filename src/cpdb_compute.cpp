@@ -123,22 +123,15 @@ void edge_sobel(IplImage* image_origin, IplImage* sobelall)
 // 430ms -> 260ms，30ms -> 20ms, 但是结果不同！
 void edge_sobel_new(IplImage* orig, IplImage* dst){
   int i, j, step;
+  CvScalar slr;
   IplImage* temp = cvCreateImage(cvGetSize(orig), IPL_DEPTH_16S, 1);
   cvSobel(orig, temp, 0, 1, 3);
-  cvConvertScale(temp, dst, 1.0, 0);
-  uchar* data = (uchar*)dst->imageData;
-  uchar* data_ = (uchar*)orig->imageData;
-  step = dst->widthStep;
-  for (i = 0; i < dst->height; i++) {
-    for (j = 0; j < dst->width; j++) {
-      data[i*step+j] /= 8;
-    }
-  }
+  cvConvertScaleAbs(temp, dst, 1.0, 0.0);
   cvThreshold(dst, dst, 2, 255, CV_THRESH_BINARY);
   cvReleaseImage(&temp);
 }
 
-// 仿照matlab，自适应求高低两个门限                                            
+// 仿照matlab，自适应求高低两个门限
 void _AdaptiveFindThreshold(IplImage *dx, IplImage *dy, double &low, double &high)   
 {                                                                              
 	CvSize size;                                                           
