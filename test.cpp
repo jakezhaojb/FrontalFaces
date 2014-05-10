@@ -83,15 +83,23 @@ bool judgeFrontFace(double *landmarks){
     return false;
   }
 
-  // For eyes and mouth
-  if (abs(landmarks[3] - landmarks[11]) > 4 || abs(landmarks[5] - landmarks[13]) > 4 ||\
-      abs(landmarks[3] - landmarks[5]) > 4.5  || abs(landmarks[7] - landmarks[9]) > 4.5 ||\
-      abs(landmarks[6] - landmarks[10] - landmarks[12] + landmarks[8]) > 7.5 ||\
-      landmarks[6] - landmarks[10] < 2.5 || landmarks[12] - landmarks[8] < 2.5)
+  // for eyes and mouth
+  if (abs(landmarks[3] - landmarks[11]) + abs(landmarks[5] - landmarks[13]) > 20 ||\
+      abs(landmarks[3] - landmarks[5]) > 6.5  || abs(landmarks[7] - landmarks[9]) > 8.5
+      ) {
     return false;
-  // for nose and center
-  if (abs(landmarks[0] - landmarks[14]) > 7.5 || abs(landmarks[1] - landmarks[15]) > 7.5)
+  }
+
+  // for nose and center, for lefting and righting faces are prevented
+  if (abs(landmarks[0] - landmarks[14]) > 4.5 || abs(landmarks[1] - landmarks[15]) > 8.5) {
     return false;
+  }
+  
+  // upping faces and downing faces are prevented
+  // 这里仍然不行！！！！
+  if ( (landmarks[7] - landmarks[1]) / (landmarks[8] - landmarks[6]) < 0.80 ) {
+    return false;
+  }
 
   return true;
 }
@@ -135,7 +143,17 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
 
         flandmark_detect(input, bbox, model, landmarks);
 
+        // display landmarks
+        cvRectangle(orig, cvPoint(bbox[0], bbox[1]), cvPoint(bbox[2], bbox[3]), CV_RGB(255,0,0) );
+        cvRectangle(orig, cvPoint(model->bb[0], model->bb[1]), cvPoint(model->bb[2], model->bb[3]), CV_RGB(0,0,255) );
+        cvCircle(orig, cvPoint((int)landmarks[0], (int)landmarks[1]), 3, CV_RGB(0, 0,255), CV_FILLED);
+        for (int i = 2; i < 2*model->data.options.M; i += 2)
+        {
+            cvCircle(orig, cvPoint(int(landmarks[i]), int(landmarks[i+1])), 3, CV_RGB(255,0,0), CV_FILLED);
+        }
+
         if( judgeFrontFace(landmarks)){
+          printf("%f\n", (landmarks[7]-landmarks[1]) / (landmarks[8] - landmarks[6]));
           // if choose the red rect.
           //cvSetImageROI(orig, *r);
           // Finally we use the blue rect!
@@ -171,14 +189,6 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
           cvResetImageROI(orig);
           front_face_num++;
           cvReleaseImage(&cpdb_sharpness);
-        }
-        // display landmarks
-        cvRectangle(orig, cvPoint(bbox[0], bbox[1]), cvPoint(bbox[2], bbox[3]), CV_RGB(255,0,0) );
-        cvRectangle(orig, cvPoint(model->bb[0], model->bb[1]), cvPoint(model->bb[2], model->bb[3]), CV_RGB(0,0,255) );
-        cvCircle(orig, cvPoint((int)landmarks[0], (int)landmarks[1]), 3, CV_RGB(0, 0,255), CV_FILLED);
-        for (int i = 2; i < 2*model->data.options.M; i += 2)
-        {
-            cvCircle(orig, cvPoint(int(landmarks[i]), int(landmarks[i+1])), 3, CV_RGB(255,0,0), CV_FILLED);
         }
     }
 
@@ -263,7 +273,7 @@ int main( int argc, char** argv )
     int frameid = 0;
     bool flag = true;
 
-    while ( cvWaitKey(20) != 27 )
+    while ( cvWaitKey(20) != 1048603 )
     {
       /*
         if (frame_num % 5 == 0) {
@@ -279,6 +289,8 @@ int main( int argc, char** argv )
       cvConvertImage(frame, frame_bw);
       detectFaceInImage(frame, frame_bw, faceCascade, model, bbox, landmarks, frame_num);
       cvShowImage(flandmark_window, frame);
+      //int key = cvWaitKey(20);
+      //printf("%d\n", key);
     }
 
     // Free the camera.
