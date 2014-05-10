@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project( facerec )
+find_package( OpenCV REQUIRED )
+add_executable( facerec facerec_demo.cpp )
+target_link_libraries( facerec ${OpenCV_LIBS} )
