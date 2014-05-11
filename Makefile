@@ -1,8 +1,26 @@
+cc = g++
 CFLAGS = `pkg-config opencv --cflags`
-LIBS = `pkg-config opencv --libs`
+LDFLAGS = `pkg-config opencv --libs`
+INCLUDE = -Isrc/
 
-test : test.cpp
-	g++ $(CFLAGS) -I src/ -o $@ $< src/*.cpp $(LIBS) 
+OBJ = main.o cpdb_compute.o flandmark_detector.o liblbp.o
 
-#test : example2.cpp flandmark_detector.cpp  flandmark_detector.h  liblbp.cpp  liblbp.h  msvc-compat.h
-#       g++ `pkg-config opencv --cflags` -I lib/ example2.cpp lib/*.cpp -o test `pkg-config opencv --src`
+test : $(OBJ)
+	$(cc) $(CFLAGS) -o test $(OBJ) $(LDFLAGS)
+	rm $(OBJ)
+
+main.o : main.cpp
+	$(cc) -c $(INCLUDE) main.cpp
+
+cpdb_compute.o : src/cpdb_compute.cpp
+	$(cc) -c src/cpdb_compute.cpp
+
+flandmark_detector.o : src/flandmark_detector.cpp
+	$(cc) -c src/flandmark_detector.cpp
+
+liblbp.o : src/liblbp.cpp
+	$(cc) -c src/liblbp.cpp
+
+.PHONY : clean
+clean:
+	rm test
