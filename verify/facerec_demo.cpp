@@ -94,32 +94,36 @@ int main(int argc, const char *argv[]) {
     // the model with, do not overlap.
     int r=0;
     float acc;
+    vector<Mat> images_train;
+    vector<int> labels_train;
     for (size_t i = 0; i < images.size(); i++) {
       std::cout << "Training " << i << " model" << std::endl;
       //Mat testSample = images[images.size() - 1];
       //int testLabel = labels[labels.size() - 1];
       //images.pop_back();
       //labels.pop_back();
+      images_train.assign(images.begin(),images.end());
+      labels_train.assign(labels.begin(),labels.end());
       Mat testSample = images[i];
       int testLabel = labels[i];
-      images.erase(images.begin()+i);
-      labels.erase(labels.begin()+i);
-      // The following lines create an Eigenfaces model for
+      images_train.erase(images_train.begin()+i);
+      labels_train.erase(labels_train.begin()+i);
+      // The following lines create an Fisherfaces model for
       // face recognition and train it with the images and
       // labels read from the given CSV file.
       // This here is a full PCA, if you just want to keep
-      // 10 principal components (read Eigenfaces), then call
+      // 10 principal components (read Fisherfaces), then call
       // the factory method like this:
       //
-      //      cv::createEigenFaceRecognizer(10);
+      //      cv::createFisherFaceRecognizer(10);
       //
       // If you want to create a FaceRecognizer with a
       // confidennce threshold, call it with:
       //
-      //      cv::createEigenFaceRecognizer(10, 123.0);
+      //      cv::createFisherFaceRecognizer(10, 123.0);
       //
-      Ptr<FaceRecognizer> model = createEigenFaceRecognizer();
-      model->train(images, labels);
+      Ptr<FaceRecognizer> model = createFisherFaceRecognizer();
+      model->train(images_train, labels_train);
       // The following line predicts the label of a given
       // test image:
       int predictedLabel = model->predict(testSample);
@@ -144,19 +148,19 @@ int main(int argc, const char *argv[]) {
       // to 0.0 without retraining the model. This can be useful if
       // you are evaluating the model:
       //
-      model->set("threshold", 0.0);
-      // Now the threshold of this model is set to 0.0. A prediction
-      // now returns -1, as it's impossible to have a distance below
-      // it
-      predictedLabel = model->predict(testSample);
+      //model->set("threshold", 0.0);
+      //// Now the threshold of this model is set to 0.0. A prediction
+      //// now returns -1, as it's impossible to have a distance below
+      //// it
+      //predictedLabel = model->predict(testSample);
       //cout << "Predicted class = " << predictedLabel << endl;
-      // Here is how to get the eigenvalues of this Eigenfaces model:
+      // Here is how to get the eigenvalues of this Fisherfaces model:
       //Mat eigenvalues = model->getMat("eigenvalues");
-      //// And we can do the same to display the Eigenvectors (read Eigenfaces):
+      //// And we can do the same to display the Fishervectors (read Fisherfaces):
       //Mat W = model->getMat("eigenvectors");
-      //// From this we will display the (at most) first 10 Eigenfaces:
+      //// From this we will display the (at most) first 10 Fisherfaces:
       //for (int i = 0; i < min(10, W.cols); i++) {
-      //    string msg = format("Eigenvalue #%d = %.5f", i, eigenvalues.at<double>(i));
+      //    string msg = format("Fishervalue #%d = %.5f", i, eigenvalues.at<double>(i));
       //    cout << msg << endl;
       //    // get eigenvector #i
       //    Mat ev = W.col(i).clone();

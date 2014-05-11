@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import sys
 import random
@@ -21,3 +23,12 @@ def del_img(*args):
         for _file in files:
             assert _file.endswith('.pgm')
             os.remove(os.path.join(_folder, _file))
+
+
+def main(argv):
+    """main function if adopted in shell"""
+    del_img(argv[1], int(argv[2]))
+
+
+if __name__ == '__main__':
+    main(sys.argv)

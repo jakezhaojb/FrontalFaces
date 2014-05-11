@@ -76,7 +76,9 @@ IplImage* getCameraFrame(CvCapture* &camera, const char *filename = 0, int camid
 }
 
 
-bool judgeFrontFace(double *landmarks){
+bool judgeFrontFace(double *landmarks, int* bbox){
+
+  double scale = bbox[2] - bbox[0];
 
   // pre-requisite
   if(int(landmarks[0]) == 0){
@@ -84,20 +86,17 @@ bool judgeFrontFace(double *landmarks){
   }
 
   // for eyes and mouth
-  if (abs(landmarks[3] - landmarks[11]) + abs(landmarks[5] - landmarks[13]) > 20 ||\
-      abs(landmarks[3] - landmarks[5]) > 6.5  || abs(landmarks[7] - landmarks[9]) > 8.5
-      ) {
+  if (abs(landmarks[3] - landmarks[5]) / scale != 0.0  || abs(landmarks[7] - landmarks[9]) / scale != 0.0) {
     return false;
   }
 
   // for nose and center, for lefting and righting faces are prevented
-  if (abs(landmarks[0] - landmarks[14]) > 4.5 || abs(landmarks[1] - landmarks[15]) > 8.5) {
+  if (abs(landmarks[0] - landmarks[14]) != 0 || abs(landmarks[1] - landmarks[15]) / scale > 0.04) {
     return false;
   }
   
   // upping faces and downing faces are prevented
-  // 这里仍然不行！！！！
-  if ( (landmarks[7] - landmarks[1]) / (landmarks[8] - landmarks[6]) < 0.80 ) {
+  if ( double(abs(landmarks[15] - bbox[1])) / scale < 0.60 ) {
     return false;
   }
 
@@ -152,8 +151,7 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
             cvCircle(orig, cvPoint(int(landmarks[i]), int(landmarks[i+1])), 3, CV_RGB(255,0,0), CV_FILLED);
         }
 
-        if( judgeFrontFace(landmarks)){
-          printf("%f\n", (landmarks[7]-landmarks[1]) / (landmarks[8] - landmarks[6]));
+        if( judgeFrontFace(landmarks, bbox)){
           // if choose the red rect.
           //cvSetImageROI(orig, *r);
           // Finally we use the blue rect!

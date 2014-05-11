@@ -30,7 +30,7 @@ def create_csv(*args):
         print "usage: create_csv(<base_path>, <path_to_csv>)"
         sys.exit(1)
 
-    BASE_PATH = args[0]
+    BASE_PATH = os.path.abspath(args[0])
     SEPARATOR = ";"
     FILE_NAME = args[1]
 
@@ -44,3 +44,13 @@ def create_csv(*args):
                 #print "%s%s%d" % (abs_path, SEPARATOR, label)
                 fid.write("%s%s%d\n" % (abs_path, SEPARATOR, label))
             label = label + 1
+    fid.close()
+
+
+def main(argv):
+    """main function if adopted in shell"""
+    create_csv(argv[1], argv[2])
+
+
+if __name__ == '__main__':
+    main(sys.argv)
