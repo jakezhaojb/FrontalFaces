@@ -1,21 +1,3 @@
-/*
- * Copyright (c) 2011. Philipp Wagner <bytefish[at]gmx[dot]de>.
- * Released to public domain under terms of the BSD Simplified license.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of the organization nor the names of its contributors
- *     may be used to endorse or promote products derived from this software
- *     without specific prior written permission.
- *
- *   See <http://www.opensource.org/licenses/bsd-license>
- */
-
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/contrib/contrib.hpp"
@@ -60,122 +42,67 @@ static void read_csv(const string& filename, vector<Mat>& images, vector<int>& l
 int main(int argc, const char *argv[]) {
     // Check for valid command line arguments, print usage
     // if no arguments were given.
-    if (argc != 2) {
-        cout << "usage: " << argv[0] << " <csv.ext>" << endl;
-        exit(1);
+    if (argc != 4) {
+      cout << "usage: " << argv[0] << " <face_train.csv> <face_test.csv> <face_result.csv>" << endl;
+      exit(1);
     }
     // Get the path to your CSV.
-    string fn_csv = string(argv[1]);
+    string tr_fn_csv = string(argv[1]);
+    string te_fn_csv = string(argv[2]);
+    string res_fn_csv = string(argv[3]);
     // These vectors hold the images and corresponding labels.
-    vector<Mat> images;
-    vector<int> labels;
+    vector<Mat> tr_images;
+    vector<int> tr_labels;
+    vector<Mat> te_images;
+    vector<int> te_labels;
     // Read in the data. This can fail if no valid
     // input filename is given.
     try {
-        read_csv(fn_csv, images, labels);
+        read_csv(tr_fn_csv, tr_images, tr_labels);
     } catch (cv::Exception& e) {
-        cerr << "Error opening file \"" << fn_csv << "\". Reason: " << e.msg << endl;
+        cerr << "Error opening file \"" << tr_fn_csv << "\". Reason: " << e.msg << endl;
+        // nothing more we can do
+        exit(1);
+    }
+    try {
+        read_csv(te_fn_csv, te_images, te_labels);
+    } catch (cv::Exception& e) {
+        cerr << "Error opening file \"" << te_fn_csv << "\". Reason: " << e.msg << endl;
         // nothing more we can do
         exit(1);
     }
     // Quit if there are not enough images for this demo.
-    if(images.size() <= 1) {
+    if(tr_images.size() <= 1 || te_images.size() < 1) {
         string error_message = "This demo needs at least 2 images to work. Please add more images to your data set!";
         CV_Error(CV_StsError, error_message);
     }
     // Get the height from the first image. We'll need this
     // later in code to reshape the images to their original
     // size:
-    int height = images[0].rows;
+    int height = tr_images[0].rows;
     // The following lines simply get the last images from
     // your dataset and remove it from the vector. This is
     // done, so that the training data (which we learn the
     // cv::FaceRecognizer on) and the test data we test
     // the model with, do not overlap.
-    int r=0;
-    float acc;
-    vector<Mat> images_train;
-    vector<int> labels_train;
-    for (size_t i = 0; i < images.size(); i++) {
-      std::cout << "Training " << i << " model" << std::endl;
-      //Mat testSample = images[images.size() - 1];
-      //int testLabel = labels[labels.size() - 1];
-      //images.pop_back();
-      //labels.pop_back();
-      images_train.assign(images.begin(),images.end());
-      labels_train.assign(labels.begin(),labels.end());
-      Mat testSample = images[i];
-      int testLabel = labels[i];
-      images_train.erase(images_train.begin()+i);
-      labels_train.erase(labels_train.begin()+i);
-      // The following lines create an Fisherfaces model for
-      // face recognition and train it with the images and
-      // labels read from the given CSV file.
-      // This here is a full PCA, if you just want to keep
-      // 10 principal components (read Fisherfaces), then call
-      // the factory method like this:
-      //
-      //      cv::createFisherFaceRecognizer(10);
-      //
-      // If you want to create a FaceRecognizer with a
-      // confidennce threshold, call it with:
-      //
-      //      cv::createFisherFaceRecognizer(10, 123.0);
-      //
-      Ptr<FaceRecognizer> model = createFisherFaceRecognizer();
-      model->train(images_train, labels_train);
-      // The following line predicts the label of a given
-      // test image:
-      int predictedLabel = model->predict(testSample);
-      //
-      // To get the confidence of a prediction call the model with:
-      //
-      //      int predictedLabel = -1;
-      //      double confidence = 0.0;
-      //      model->predict(testSample, predictedLabel, confidence);
-      //
-      string result_message = format("Predicted class = %d / Actual class = %d.", predictedLabel, testLabel);
-      if (predictedLabel == testLabel) {
-        ++r;
-      }
-      //cout << result_message << endl;
-      // Sometimes you'll need to get/set internal model data,
-      // which isn't exposed by the public cv::FaceRecognizer.
-      // Since each cv::FaceRecognizer is derived from a
-      // cv::Algorithm, you can query the data.
-      //
-      // First we'll use it to set the threshold of the FaceRecognizer
-      // to 0.0 without retraining the model. This can be useful if
-      // you are evaluating the model:
-      //
-      //model->set("threshold", 0.0);
-      //// Now the threshold of this model is set to 0.0. A prediction
-      //// now returns -1, as it's impossible to have a distance below
-      //// it
-      //predictedLabel = model->predict(testSample);
-      //cout << "Predicted class = " << predictedLabel << endl;
-      // Here is how to get the eigenvalues of this Fisherfaces model:
-      //Mat eigenvalues = model->getMat("eigenvalues");
-      //// And we can do the same to display the Fishervectors (read Fisherfaces):
-      //Mat W = model->getMat("eigenvectors");
-      //// From this we will display the (at most) first 10 Fisherfaces:
-      //for (int i = 0; i < min(10, W.cols); i++) {
-      //    string msg = format("Fishervalue #%d = %.5f", i, eigenvalues.at<double>(i));
-      //    cout << msg << endl;
-      //    // get eigenvector #i
-      //    Mat ev = W.col(i).clone();
-      //    // Reshape to original size & normalize to [0...255] for imshow.
-      //    Mat grayscale = toGrayscale(ev.reshape(1, height));
-      //    // Show the image & apply a Jet colormap for better sensing.
-      //    Mat cgrayscale;
-      //    applyColorMap(grayscale, cgrayscale, COLORMAP_JET);
-      //    imshow(format("%d", i), cgrayscale);
-      //}
-      //waitKey(0);
-        
+
+    //int r=0;
+    //float acc;
+
+    Ptr<FaceRecognizer> model = createFisherFaceRecognizer();
+    model->train(tr_images, tr_labels);
+    
+    ofstream os;
+    os.open(res_fn_csv, std::fstream::out);
+
+    for (size_t i = 0; i < te_images.size(); i++) {
+      int predictedLabel = model->predict(te_images[i]);
+      
+      // print to res file
+      os << std::to_string(predictedLabel) << "\n";
     }
 
-    std::cout << float(r) / images.size() << std::endl;
+    os.close();
 
     return 0;
 }

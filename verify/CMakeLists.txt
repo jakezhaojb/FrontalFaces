@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
+set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -O2")
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall -std=c++11 -O0 -g -fno-inline")
+set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -O3 -march=native -ffast-math")
 project( facerec )
 find_package( OpenCV REQUIRED )
 add_executable( facerec facerec_demo.cpp )
