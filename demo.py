@@ -6,6 +6,7 @@ from del_img import del_img
 from create_csv import create_csv, create_csv_no_label
 import matplotlib.pyplot as plt
 import matplotlib.image as mimg
+import matplotlib.cm as cm
 import time
 
 
@@ -33,12 +34,12 @@ def main():
         # te_sample shows
         img1 = mimg.imread(file_path_te)
         plt.subplot(121)
-        plt.imshow(img1)
+        plt.imshow(img1, cmap=cm.gray)
         # tr_sample shows
         line = fn_res.readline()
         img2 = mimg.imread(path_dict_tr.get(int(line))[0])
         plt.subplot(122)
-        plt.imshow(img2)
+        plt.imshow(img2, cmap=cm.gray)
         # IO
         plt.show()
         time.sleep(1.5)
