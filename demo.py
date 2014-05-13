@@ -6,6 +6,7 @@ from del_img import del_img
 from create_csv import create_csv, create_csv_no_label
 import matplotlib.pyplot as plt
 import matplotlib.image as mimg
+import time
 
 
 def main():
@@ -40,6 +41,8 @@ def main():
         plt.imshow(img2)
         # IO
         plt.show()
+        time.sleep(1.5)
+        plt.close()
     # QA
     line = fn_res.readline()
     assert len(line) == 0 or line == '\n'
