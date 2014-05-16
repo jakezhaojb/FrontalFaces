@@ -2,15 +2,16 @@ cc = g++
 CFLAGS = `pkg-config opencv --cflags`
 LDFLAGS = `pkg-config opencv --libs`
 INCLUDE = -Isrc/
+FLAGS = -std=c++11
 
 OBJ = main.o cpdb_compute.o flandmark_detector.o liblbp.o
 
 test : $(OBJ)
-	$(cc) $(CFLAGS) -o test $(OBJ) $(LDFLAGS)
+	$(cc) $(CFLAGS) -o test $(OBJ) $(LDFLAGS) $(FLAGS)
 	rm $(OBJ)
 
 main.o : main.cpp
-	$(cc) -c $(INCLUDE) main.cpp
+	$(cc) -c $(INCLUDE) main.cpp $(FLAGS)
 
 cpdb_compute.o : src/cpdb_compute.cpp
 	$(cc) -c src/cpdb_compute.cpp

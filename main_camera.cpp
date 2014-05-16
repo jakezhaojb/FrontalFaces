@@ -11,7 +11,6 @@
 #include <opencv/cv.h>
 #include <opencv/cvaux.h>
 #include <opencv/highgui.h>
-#include "opencv2/opencv.hpp"
 
 #include <cstring>
 #include <stdlib.h>
@@ -21,8 +20,6 @@
 
 #include "flandmark_detector.h"
 #include "cpdb_compute.h"
-
-using namespace cv;
 
 // global variable
 int front_face_num = 1;
@@ -110,7 +107,7 @@ bool judgeFrontFace(double *landmarks, int* bbox){
 void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade* cascade, FLANDMARK_Model *model, int *bbox, double *landmarks, int frame_num)
 {
     // Smallest face size.
-    CvSize minFeatureSize = cvSize(75, 75);
+    CvSize minFeatureSize = cvSize(150, 150);
     int flags =  CV_HAAR_DO_CANNY_PRUNING;
     // How detailed should the search be.
     float search_scale_factor = 1.1f;
@@ -118,7 +115,7 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
     CvSeq* rects;
     int nFaces;
     char front_img_file_name[32];
-    IplImage* regular_face = cvCreateImage(cvSize(112, 92), 8, 3);
+    IplImage* regular_face = cvCreateImage(cvSize(50, 50), 8, 3);
     IplImage* cpdb_sharpness;
     double cpdb_value;
 
@@ -144,6 +141,15 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
         //}
 
         flandmark_detect(input, bbox, model, landmarks);
+
+        // display landmarks
+        cvRectangle(orig, cvPoint(bbox[0], bbox[1]), cvPoint(bbox[2], bbox[3]), CV_RGB(255,0,0) );
+        cvRectangle(orig, cvPoint(model->bb[0], model->bb[1]), cvPoint(model->bb[2], model->bb[3]), CV_RGB(0,0,255) );
+        cvCircle(orig, cvPoint((int)landmarks[0], (int)landmarks[1]), 3, CV_RGB(0, 0,255), CV_FILLED);
+        for (int i = 2; i < 2*model->data.options.M; i += 2)
+        {
+            cvCircle(orig, cvPoint(int(landmarks[i]), int(landmarks[i+1])), 3, CV_RGB(255,0,0), CV_FILLED);
+        }
 
         if( judgeFrontFace(landmarks, bbox)){
           // if choose the red rect.
@@ -181,18 +187,8 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
           cvResetImageROI(orig);
           front_face_num++;
           cvReleaseImage(&cpdb_sharpness);
-        } // judge ends
-
-        // display landmarks
-        //cvRectangle(orig, cvPoint(bbox[0], bbox[1]), cvPoint(bbox[2], bbox[3]), CV_RGB(255,0,0) );
-        cvRectangle(orig, cvPoint(model->bb[0], model->bb[1]), cvPoint(model->bb[2], model->bb[3]), CV_RGB(0,0,255) );
-        cvCircle(orig, cvPoint((int)landmarks[0], (int)landmarks[1]), 3, CV_RGB(0, 0, 255), CV_FILLED);
-        for (int i = 2; i < 2*model->data.options.M; i += 2)
-        {
-            cvCircle(orig, cvPoint(int(landmarks[i]), int(landmarks[i+1])), 3, CV_RGB(238,238,0), CV_FILLED);
         }
-
-    } // iface ens
+    }
 
     t = (double)cvGetTickCount() - t;
     int ms = cvRound( t / ((double)cvGetTickFrequency() * 1000.0) );
@@ -227,20 +223,12 @@ int main( int argc, char** argv )
       system("rm -r FrontFace");
     system("mkdir FrontFace");
 
-    //CvCapture* camera = 0;	// The camera device.
-    VideoCapture cap;
-    cap.open("/home/junbo/UndergradThesis/FrontalFace/video/ipart_head_video/img%04d.png");
-    if(!cap.isOpened()){
-      std::cout << "Video not found." << std::endl;
-      return -1;
-    }else{
-      std::cout << "Video loading done." << std::endl;
-    }
-
-    //IplImage *frame = 0;
+    CvCapture* camera = 0;	// The camera device.
+    IplImage *frame = 0;
 
     int width=320, height=240, camid;
     camid = 0;
+    frame = getCameraFrame(camera, 0, camid, width, height);
     vidfps = 10;
     frameW = 640;
     frameH = 480;
@@ -274,6 +262,7 @@ int main( int argc, char** argv )
 
     int *bbox = (int*)malloc(4*sizeof(int));
     double *landmarks = (double*)malloc(2*model->data.options.M*sizeof(double));
+    IplImage *frame_bw = cvCreateImage(cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
 
     char fps[50];
     CvFont font;
@@ -282,23 +271,22 @@ int main( int argc, char** argv )
     int frameid = 0;
     bool flag = true;
 
-    for (;;)
+    while ( cvWaitKey(20) != 27 )
     {
-      //frame = getCameraFrame(camera);
-      cv::Mat frame_;
-      cap >> frame_;
-      if (cvWaitKey(10) == 27) {
-        break;
-      }
-      // Convert cv::Mat to IplImage
-      IplImage *frame = new IplImage(frame_); // 怀疑是和frame_是一片内存?释放了下一次循环的时候frame_的内存就没了？
-
-      IplImage *frame_bw = cvCreateImage(cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
+      /*
+        if (frame_num % 5 == 0) {
+          frame = getCameraFrame(camera);
+          cvConvertImage(frame, frame_bw);
+          detectFaceInImage(frame, frame_bw, faceCascade, model, bbox, landmarks, frame_num);
+          cvShowImage(flandmark_window, frame);
+        } else {
+          frame = getCameraFrame(camera);
+          cvShowImage(flandmark_window, frame);
+        } */
+      frame = getCameraFrame(camera);
       cvConvertImage(frame, frame_bw);
       detectFaceInImage(frame, frame_bw, faceCascade, model, bbox, landmarks, frame_num);
       cvShowImage(flandmark_window, frame);
-      //cvReleaseImage(&frame);  // TODO
-      cvReleaseImage(&frame_bw);
       //int key = cvWaitKey(20);
       //printf("%d\n", key);
     }
@@ -306,7 +294,7 @@ int main( int argc, char** argv )
     // Free the camera.
     free(landmarks);
     free(bbox);
-    //cvReleaseCapture(&camera);
+    cvReleaseCapture(&camera);
     cvReleaseHaarClassifierCascade(&faceCascade);
     cvDestroyWindow(flandmark_window);
     flandmark_free(model);
