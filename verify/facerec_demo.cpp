@@ -89,7 +89,7 @@ int main(int argc, const char *argv[]) {
     //int r=0;
     //float acc;
 
-    Ptr<FaceRecognizer> model = createFisherFaceRecognizer();
+    Ptr<FaceRecognizer> model = createLBPHFaceRecognizer();
     model->train(tr_images, tr_labels);
     
     ofstream os;

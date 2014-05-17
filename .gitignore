@@ -1,3 +1,8 @@
 verify/build
 verify/faces
 verify/faces_single
+*.png
+*.pyc
+*.avi
+*.mpeg
+video/build

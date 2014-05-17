@@ -8,29 +8,24 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mimg
 import matplotlib.cm as cm
 
+BASE_PATH = os.path.dirname(sys.argv[0])
+
 
 def main():
-    # traverse the data
-    if os.path.isfile('tmp.csv'):
-        os.remove('tmp.csv')
-    create_csv('.', 'tmp.csv')
-    fn = open('tmp.csv')
-    plt.figure()
-    while 1:
-        try:
-            line = fn.readline()
-            line = line[:line.find(';')]
-            if len(line) is 0:
-                break
-            img = mimg.imread(line) # numpy.ndarray
-            plt.imshow(img, cmap=cm.gray) # gray scale
-            plt.draw()
-            plt.pause(0.2)
-            plt.clf()
-        except:
-            pass
-    fn.close()
-    os.remove('tmp.csv')
+    for dirname, dirnames, filenames in os.walk(BASE_PATH):
+        for fn in filenames:
+            try:
+                assert fn.endswith('.png')
+                assert not fn.startswith('.')
+                img_path = os.path.join(dirname, fn)
+                img = mimg.imread(img_path)
+                plt.imshow(img)
+                plt.draw()
+                plt.pause(0.2)
+                plt.clf()
+            except:
+                pass
+
 
 if __name__ == '__main__':
     main()

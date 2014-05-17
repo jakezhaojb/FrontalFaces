@@ -27,6 +27,7 @@ using namespace cv;
 // global variable
 int front_face_num = 1;
 FILE *fp;
+int frame_num = 0;
 
 IplImage* getCameraFrame(CvCapture* &camera, const char *filename = 0, int camid=0, int width=320, int height=240)
 {
@@ -84,17 +85,17 @@ bool judgeFrontFace(double *landmarks, int* bbox){
   double scale = bbox[2] - bbox[0];
 
   // pre-requisite
-  if(int(landmarks[0]) == 0){
+  if(int(landmarks[0]) == 0 || consec_exam(frame_num)){
     return false;
   }
 
   // for eyes and mouth
-  if (abs(landmarks[3] - landmarks[5]) / scale != 0.0  || abs(landmarks[7] - landmarks[9]) / scale != 0.0) {
+  if (abs(landmarks[3] - landmarks[5]) / scale > 0.04){//  || abs(landmarks[7] - landmarks[9]) / scale != 0.0) {
     return false;
   }
 
   // for nose and center, for lefting and righting faces are prevented
-  if (abs(landmarks[0] - landmarks[14]) != 0 || abs(landmarks[1] - landmarks[15]) / scale > 0.04) {
+  if (abs(landmarks[0] - landmarks[14]) != 0){// || abs(landmarks[1] - landmarks[15]) / scale > 0.04) {
     return false;
   }
   
@@ -107,7 +108,7 @@ bool judgeFrontFace(double *landmarks, int* bbox){
 }
 
 
-void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade* cascade, FLANDMARK_Model *model, int *bbox, double *landmarks, int frame_num)
+void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade* cascade, FLANDMARK_Model *model, int *bbox, double *landmarks)
 {
     // Smallest face size.
     CvSize minFeatureSize = cvSize(75, 75);
@@ -152,35 +153,35 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
           cvSetImageROI(orig, cvRect(model->bb[0], model->bb[1], model->bb[2]-model->bb[0], model->bb[3]-model->bb[1]));
           cvResize(orig, regular_face);
           // Sharpness judgement
-          cpdb_sharpness = cvCreateImage(cvGetSize(orig), orig->depth, 1);
-          cvCvtColor(orig, cpdb_sharpness, CV_BGR2GRAY);
-          cpdb_value = cpdbm(cpdb_sharpness);
+          //cpdb_sharpness = cvCreateImage(cvGetSize(orig), orig->depth, 1);
+          //cvCvtColor(orig, cpdb_sharpness, CV_BGR2GRAY);
+          //cpdb_value = cpdbm(cpdb_sharpness);
 
-          sprintf(front_img_file_name, "FrontFace//%d_%d_%d_%f.jpg", frame_num, iface + 1, front_face_num, cpdb_value);
+          sprintf(front_img_file_name, "FrontFace//%d_%d_%d.png", frame_num, iface + 1, front_face_num);//, cpdb_value);
           std::cout << front_img_file_name << " is captured!" << std::endl;
           // DEBUG!
-          fp = fopen("FrontFace//records.txt", "at");
-          fprintf(fp, "FrontFace//%d_%d_%d_%f.jpg is captured, and the following is the points:\n",\
-              frame_num, iface + 1, front_face_num, cpdb_value);
+          //fp = fopen("FrontFace//records.txt", "at");
+          //fprintf(fp, "FrontFace//%d_%d_%d.png is captured, and the following is the points:\n",\
+          //    frame_num, iface + 1, front_face_num);
           //for (int i_debug = 0; i_debug < 15; i_debug += 2) {
           //  fprintf(fp, "%f, %f\n", landmarks[i_debug], landmarks[i_debug+1]);
           //}
-          fprintf(fp, "\tface center:%f, %f\n", landmarks[0], landmarks[1]);
-          fprintf(fp, "\tleft L-eye :%f, %f\n", landmarks[10], landmarks[11]);
-          fprintf(fp, "\tright L-eye:%f, %f\n", landmarks[2], landmarks[3]);
-          fprintf(fp, "\tleft R-eye :%f, %f\n", landmarks[4], landmarks[5]);
-          fprintf(fp, "\tright R-eye:%f, %f\n", landmarks[12], landmarks[13]);
-          fprintf(fp, "\tnose       :%f, %f\n", landmarks[14], landmarks[15]);
-          fprintf(fp, "\tleft mouth :%f, %f\n", landmarks[6], landmarks[7]);
-          fprintf(fp, "\tright mouth:%f, %f\n", landmarks[8], landmarks[9]);
-          fprintf(fp, "\n");
-          fclose(fp);
+          //fprintf(fp, "\tface center:%f, %f\n", landmarks[0], landmarks[1]);
+          //fprintf(fp, "\tleft L-eye :%f, %f\n", landmarks[10], landmarks[11]);
+          //fprintf(fp, "\tright L-eye:%f, %f\n", landmarks[2], landmarks[3]);
+          //fprintf(fp, "\tleft R-eye :%f, %f\n", landmarks[4], landmarks[5]);
+          //fprintf(fp, "\tright R-eye:%f, %f\n", landmarks[12], landmarks[13]);
+          //fprintf(fp, "\tnose       :%f, %f\n", landmarks[14], landmarks[15]);
+          //fprintf(fp, "\tleft mouth :%f, %f\n", landmarks[6], landmarks[7]);
+          //fprintf(fp, "\tright mouth:%f, %f\n", landmarks[8], landmarks[9]);
+          //fprintf(fp, "\n");
+          //fclose(fp);
           // DEBUG ends.
-          //front_img_file_name = "FrontFace//" + ::itoa(front_face_num) + ".jpg" ;
+          //front_img_file_name = "FrontFace//" + ::itoa(front_face_num) + ".png" ;
           cvSaveImage(front_img_file_name, orig);
           cvResetImageROI(orig);
           front_face_num++;
-          cvReleaseImage(&cpdb_sharpness);
+          //cvReleaseImage(&cpdb_sharpness);
         } // judge ends
 
         // display landmarks
@@ -192,7 +193,7 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
             cvCircle(orig, cvPoint(int(landmarks[i]), int(landmarks[i+1])), 3, CV_RGB(238,238,0), CV_FILLED);
         }
 
-    } // iface ens
+    } // iface ends
 
     t = (double)cvGetTickCount() - t;
     int ms = cvRound( t / ((double)cvGetTickFrequency() * 1000.0) );
@@ -210,9 +211,9 @@ void detectFaceInImage(IplImage *orig, IplImage* input, CvHaarClassifierCascade*
 
 int main( int argc, char** argv )
 {
-    char flandmark_window[] = "flandmark_example2";
+    char flandmark_window[] = "demo";
     double t;
-    int ms, frame_num = 0;
+    int ms;
 
     bool video = false, savevideo = false;
 
@@ -246,7 +247,8 @@ int main( int argc, char** argv )
     frameH = 480;
     fourcc = CV_FOURCC('D', 'I', 'V', 'X');
 
-    cvNamedWindow(flandmark_window, 0);
+    cvNamedWindow(flandmark_window, CV_WINDOW_AUTOSIZE);
+    cvMoveWindow(flandmark_window, 400, 200);
 
     // Haar Cascade file, used for Face Detection.
     char faceCascadeFilename [] = "haarcascade_frontalface_alt.xml";
@@ -269,7 +271,8 @@ int main( int argc, char** argv )
     }
     t = (double)cvGetTickCount() - t;
     ms = cvRound( t / ((double)cvGetTickFrequency() * 1000.0) );
-    printf("Structure model loaded in %d ms.\n", ms);
+    //printf("Structure model loaded in %d ms.\n", ms);
+    printf("model loading done\n");
     // ------------- end flandmark load model
 
     int *bbox = (int*)malloc(4*sizeof(int));
@@ -295,12 +298,13 @@ int main( int argc, char** argv )
 
       IplImage *frame_bw = cvCreateImage(cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
       cvConvertImage(frame, frame_bw);
-      detectFaceInImage(frame, frame_bw, faceCascade, model, bbox, landmarks, frame_num);
+      detectFaceInImage(frame, frame_bw, faceCascade, model, bbox, landmarks);
       cvShowImage(flandmark_window, frame);
       //cvReleaseImage(&frame);  // TODO
       cvReleaseImage(&frame_bw);
       //int key = cvWaitKey(20);
       //printf("%d\n", key);
+      ++frame_num;
     }
 
     // Free the camera.

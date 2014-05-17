@@ -14,6 +14,8 @@
 #include "msvc-compat.h"
 #include <opencv/cv.h>
 #include <opencv/cvaux.h>
+#include <vector>
+#include <algorithm>
 
 // index row-order matrices
 #define INDEX(ROW, COL, NUM_ROWS) ((COL)*(NUM_ROWS)+(ROW))
@@ -189,5 +191,7 @@ int flandmark_detect_base(uint8_t *face_image, FLANDMARK_Model *model, double *l
  *
  */
 int flandmark_detect(IplImage *img, int * bbox, FLANDMARK_Model *model, double *landmarks, int * bw_margin = 0);
+
+bool consec_exam(int frame_num_now);
 
 #endif // __LIBFLD_DETECTOR_H_
