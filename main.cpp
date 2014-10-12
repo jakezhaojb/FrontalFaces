@@ -85,7 +85,7 @@ bool judgeFrontFace(double *landmarks, int* bbox){
   double scale = bbox[2] - bbox[0];
 
   // pre-requisite
-  if(int(landmarks[0]) == 0 || consec_exam(frame_num)){
+  if(int(landmarks[0]) == 0){
     return false;
   }
 
