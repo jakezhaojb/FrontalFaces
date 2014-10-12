@@ -16,7 +16,7 @@ This is a small demo that requires a video as an input and it captures the front
 
 Intallation
 ---
-OpenCV and python 2.7+.     
+OpenCV and python 2.     
 
 The main functions are built in C++. Python is used as a wrapper, making demo a more convenient showing. 
 
